@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10分鐘 AI 動畫短片製作進度表</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-background-primary: #ffffff;
+            --color-background-secondary: #f5f5f5;
+            --color-background-info: #e6f1fb;
+            --color-background-success: #eaf3de;
+            --color-text-primary: #000000;
+            --color-text-secondary: #666666;
+            --color-text-info: #378add;
+            --color-text-success: #639922;
+            --color-text-danger: #e24b4a;
+            --color-border-tertiary: rgba(0, 0, 0, 0.15);
+            --color-border-secondary: rgba(0, 0, 0, 0.3);
+            --color-border-info: #378add;
+            --color-border-success: #639922;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-background-primary: #1a1a1a;
+                --color-background-secondary: #2a2a2a;
+                --color-background-info: #1e3a52;
+                --color-background-success: #2a3a1e;
+                --color-text-primary: #ffffff;
+                --color-text-secondary: #b0b0b0;
+                --color-text-info: #85b7eb;
+                --color-text-success: #97c459;
+                --color-text-danger: #f09595;
+                --color-border-tertiary: rgba(255, 255, 255, 0.15);
+                --color-border-secondary: rgba(255, 255, 255, 0.3);
+                --color-border-info: #378add;
+                --color-border-success: #639922;
+            }
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-background-secondary);
+            color: var(--color-text-primary);
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--color-background-primary);
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+        }
+
+        .header {
+            margin-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .deadline {
+            color: var(--color-text-danger);
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-md);
+            padding: 1rem;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        .columns-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .columns-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .column {
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: 1rem;
+            min-height: 400px;
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--color-background-primary);
+            border-radius: var(--border-radius-md);
+        }
+
+        .column-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        .column-count {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 300px;
+        }
+
+        .task-list.drag-over {
+            background: rgba(55, 138, 221, 0.1);
+            border-radius: var(--border-radius-md);
+        }
+
+        .task-card {
+            background: var(--color-background-primary);
+            border: 0.5px solid var(--color-border-tertiary);
+            border-radius: var(--border-radius-lg);
+            padding: 12px 16px;
+            transition: all 0.2s;
+            cursor: move;
+        }
+
+        .task-card:hover {
+            border-color: var(--color-border-secondary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-card.dragging {
+            opacity: 0.5;
+        }
+
+        .task-card.completed {
+            opacity: 0.6;
+        }
+
+        .task-card.completed .task-name {
+            text-decoration: line-through;
+        }
+
+        .task-card.expanded {
+            border-color: var(--color-border-info);
+        }
+
+        .task-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .drag-handle {
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--color-text-secondary);
+            cursor: move;
+            font-size: 16px;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .task-info {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+        .task-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .task-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .task-tag {
+            background: var(--color-background-secondary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .expand-icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--color-text-secondary);
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .script-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            margin-top: 0;
+        }
+
+        .script-content.expanded {
+            max-height: 500px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 0.5px solid var(--color-border-tertiary);
+        }
+
+        .script-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--color-text-secondary);
+            white-space: pre-wrap;
+            font-family: var(--font-sans);
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 8px 12px;
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-md);
+        }
+
+        .script-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .completed-section {
+            margin-top: 2rem;
+        }
+
+        .completed-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--color-background-success);
+            border-radius: var(--border-radius-md);
+        }
+
+        .completed-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--color-text-success);
+        }
+
+        .completed-count {
+            font-size: 13px;
+            color: var(--color-text-success);
+        }
+
+        .completed-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .progress-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 0.5px solid var(--color-border-tertiary);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .progress-percent {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--color-background-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--color-background-info);
+            transition: width 0.3s;
+        }
+
+        .notes-section {
+            margin-top: 2rem;
+            padding: 1rem 1.25rem;
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-lg);
+        }
+
+        .notes-section h3 {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .notes-section ul {
+            list-style: none;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .notes-section li {
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .notes-section li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>10分鐘 AI 動畫短片製作進度</h1>
+            <div class="header-meta">
+                <span>總場次：24 場待完成</span>
+                <span>工作流程：AI 生圖 → Seadance 轉影片</span>
+                <span class="deadline">截止：5/31（六）</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">總進度</div>
+                <div class="stat-value" id="overall-percent">8%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">已完成</div>
+                <div class="stat-value" id="completed-count">2 / 26</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">剩餘場次</div>
+                <div class="stat-value" id="remaining-count">24</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">剩餘天數</div>
+                <div class="stat-value" id="days-left">10</div>
+            </div>
+        </div>
+
+        <div class="columns-container">
+            <div class="column">
+                <div class="column-header">
+                    <div class="column-title">宏瑞的任務</div>
+                    <div class="column-count" id="hong-count">0 場</div>
+                </div>
+                <div class="task-list" id="hong-tasks" data-owner="hong"></div>
+            </div>
+
+            <div class="column">
+                <div class="column-header">
+                    <div class="column-title">仲彥的任務</div>
+                    <div class="column-count" id="zhong-count">0 場</div>
+                </div>
+                <div class="task-list" id="zhong-tasks" data-owner="zhong"></div>
+            </div>
+        </div>
+
+        <div class="completed-section">
+            <div class="completed-header">
+                <div class="completed-title">已完成場景</div>
+                <div class="completed-count">2 場</div>
+            </div>
+            <div class="completed-grid" id="completed-tasks"></div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-header">
+                <div class="progress-label">總體進度</div>
+                <div class="progress-percent" id="progress-text">2 / 26 (8%)</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 8%"></div>
+            </div>
+        </div>
+
+        <div class="notes-section">
+            <h3>使用說明</h3>
+            <ul>
+                <li>拖移任務卡片可以在宏瑞和仲彥之間調整負責人</li>
+                <li>點擊任務卡片內容區域可展開查看劇本</li>
+                <li>勾選完成後進度會自動儲存到瀏覽器本地</li>
+                <li>所有修改都會即時同步儲存</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const scriptData = {
+            'scene1': { name: '醫院蒙太奇（X光、核磁共振、抽血）', tags: ['蒙太奇', '可直接生影片'], defaultOwner: 'hong', script: `MONTAGE – SERIES OF SHOTS. 醫院 – 日\n– 雨晴到醫院做X光檢查。\n– 雨晴到醫院做核磁共振。\n– 雨晴到醫院抽血。` },
+            'scene81': { name: '81場 - INT. 診間，陸明遠看檢查報告', tags: ['對話場景', '醫院'], defaultOwner: 'hong', script: `81. INT. 診間 – 日\n陸明遠看著手上的檢查數據，以及X光。\n雨晴看著陸醫生。` },
+            'scene54': { name: '54場 - EXT. 婚禮現場（夢境，新郎變換）', tags: ['夢境', '視覺特效'], defaultOwner: 'hong', script: `54. EXT. 婚禮現場 – 日\n再度又是一個浪漫的婚禮，眾人簇擁下這次新娘就是她自己。\n她看向身邊的新郎，竟然是高逸軒。\n她嚇了一跳閉上眼睛，對方拉住了她，再度睜開眼竟然又變成陸皓丞。` },
+            'scene56': { name: '56場 - INT. 雨晴家走廊，父親搬蘭花', tags: ['夜戲', '凌晨4點氛圍'], defaultOwner: 'hong', script: `56. INT. 雨晴家走廊 – 夜\n雨晴走出門倒水發現父親在玄關處搬東西，牆上的時鐘顯示凌晨4點5分。\n\n顧雨晴：爸，三更半夜你在幹嘛\n\n顧思誠：凌晨好像下起大雨，我怕蘭花被淋壞。` },
+            'scene57': { name: '57場 - INT. 樓梯間，蘭花香氛圍', tags: ['短場景', '可併入56場'], defaultOwner: 'hong', script: `57. INT. 樓梯間 – 夜\n蘭花是母親生前最喜愛的幾株，之後不斷分株的花苗所種，為了延續這幾種蘭花父親每年固定培植分株，也擔心蘭花淋雨會影響花苗，才半夜乍醒。\n\n雨晴走向前詢問，才發現因為凌晨大雨，父親擔心蘭花於是去樓上將花移動，雨晴走到梯間發現梯間滿是蘭花香。` },
+            'scene58': { name: '58場 - INT. 廚房，泡紅糖薑茶', tags: ['短場景', '可併入56-57'], defaultOwner: 'hong', script: `58. INT. 廚房 – 夜\n趁著父親梳洗吹髮，雨晴到廚房泡了點紅糖薑茶，敲門送進父親房裡時。` },
+            'scene59': { name: '59場 - INT. 父親房，看母親照片對話', tags: ['情感重場', '父女對話'], defaultOwner: 'hong', script: `59. INT. 雨晴父親房 – 夜\n父親正在書桌前看著母親照片。\n\n顧雨晴：…媽媽走的時候，感覺如何？\n\n雨晴見此景問道。\n\n顧思誠：她走的很安詳、很平和\n\n顧思誠輕撫著相片微笑。\n\n顧雨晴：我是說你...\n\n雨晴聽聞感到悲傷，看著父親的側臉，柔聲問道。\n\n顧雨晴：如果有一天…我\n\n見父親悲傷不語，雨晴接著說...。\n\n顧思誠：這些蘭花我想送些去蘭園，妳假日有空幫我載去嗎？\n\n父親如同以往一樣，不願意在死亡議題上多聊，用另外一個話題結束。\n小時候她就見識過了，母親過世前他都是不斷安慰母女說病情就快治癒，在父親心裡，似乎不聊這件事，事情就不會發生一樣。` },
+            'scene60': { name: '60場 - INT. 雨晴家客廳，餵貓', tags: ['貓咪互動', '凌晨4點'], defaultOwner: 'hong', script: `60. INT. 雨晴家客廳 – 夜\n走出父親房間，坐在門口的貓隨即過來撒嬌，另外一隻也跟著走出來繞著她，她看看時間才凌晨四點多。\n\n顧雨晴：那麼早就餓了，現在要吃宵夜還是早餐啊？\n\n聽到雨晴的話，貓咪又像是被開了開關，大肆的喵喵叫。\n雨晴被撒嬌不得，只好宣告投降，到廚房弄點食物，看著貓咪她想到那段話。` },
+            'scene-haocheng-bedroom': { name: 'INT. 皓丞臥室，遺憾對話', tags: ['情感重場', '母親回憶'], defaultOwner: 'hong', script: `INT. 皓丞臥室 – 夜\n\n顧雨晴：母親常說，等我身體好一點了，他就會補償我什麼，但她最後都沒有做到。\n\n雨晴眼框泛淚，微笑道。\n\n陸皓丞：妳遺憾嗎？\n\n顧雨晴：遺憾的並不是我，而是過世的人\n\n雨晴抹去快要落下的眼淚，回想起母親在她兒時的種種，母親似乎錯過了很多她的童年。\n\n顧雨晴：我想她應該一直很遺憾，沒有在我睡前讀故事給我聽，也沒有教我鋼琴，更沒有教我更多她會的事情吧！\n\n雨晴笑著。` },
+            'scene74': { name: '74場 - INT. 皓丞家，餵貓、窗簾拉開', tags: ['日常場景', '皓丞家'], defaultOwner: 'hong', script: `74. INT. 皓丞家 – 日\n隔天一早，雨晴一如往常正在廚房準備貓咪與他們的食物，正在餵貓時，突然間一個窗簾拉開的聲音，她抬頭望向客廳，是精神奕奕的陸皓丞。\n\n陸皓丞：妳還記得妳的遺願清單嗎？` },
+            'scene-manli-vo': { name: 'INT. 皓丞家，曼莉 VO 旁白、發現照片', tags: ['VO 場景', '轉折'], defaultOwner: 'hong', script: `INT. 皓丞家 – 日\n\n謝曼莉（VO）：後來幾次聚會，就越來越熟\n\n回到家後，家裡的兩隻貓立即不安分的湊過來，她趕快把貓帶回房間。\n\n謝曼莉（VO）：有一次我無意間提到妳的病況，剛好是妳前陣子住院的時候\n\n接著拿出吸塵器，先把貓毛清潔後，她順便把垃圾都集中起來，準備去倒垃圾。\n\n謝曼莉（VO）：他跟我提到他們醫院的陸醫生很不錯，我才推薦你轉院\n\n像是突然想到什麼，她走到皓丞書房，準備將他的垃圾倒入袋子，卻發現裡面有她的照片。\n她狐疑的將垃圾堆中,一張看似是她的照片的碎片，從垃圾堆裡抽出。` },
+            'scene100': { name: '100場 - INT. 雨晴房，拼湊撕碎文件', tags: ['細節特寫', '懸疑感'], defaultOwner: 'hong', script: `100. INT. 皓丞家 – 雨晴房 – 日\n她坐在房裡的小方桌前，將已經撕碎的文件拼起來。\n文件是一份名單以及她的個人資料，還有她在寵物店光顧的拍攝。\n她倒抽一口氣。` },
+            'scene102': { name: '102場 - INT. 皓品集辦公室，質問對質', tags: ['對話重場', '衝突高潮'], defaultOwner: 'hong', script: `102. INT. 皓品集辦公室 – 日\n雖然說不要自己嚇自己，但想到要質問，雨晴想了一下，決定到辦公室找他。\n\n陸皓丞：你找我什麼事，不能回家說\n\n顧雨晴：當然...不能\n\n要在公開場合比較安全\n\n雨晴從包裡將撕碎的文件拿出來，放在桌上。\n\n陸皓丞：這是\n\n顧雨晴：我在你房間看到的\n\n陸皓丞：我已經丟了\n\n顧雨晴：我看到了，還撕爛了。但問題是這個....你為什麼有我的照片\n\n雨晴將一疊紙打亂，露出有她的照片的那幾張，指著。\n\n陸皓丞：我們是夫妻，我有你照片很正常\n\n顧雨晴：不正常，你看。這個，是我領養貓那天的照片，這應該是偷拍吧。還有這個表格，是怎麼回事？你一開始就知道我們可以配對嗎？\n\n陸皓丞：所以你要到公司來找我，是怕...我嗎？\n\n顧雨晴：我當然...誰怕你啊。\n\n雨晴原本站著，拉了一張椅子坐下來。\n\n顧雨晴：我是要跟你說正事，我要離婚。\n\n雨晴坐直身體，清了一下喉嚨。` },
+            'scene127': { name: '127場 - INT. 計程車上，VO 獨白', tags: ['VO 過場', '可直接生影片'], defaultOwner: 'hong', script: `127. INT. 計程車上 – 日\n雨晴跟朋友坐著計程車，迎著陽光向前。\n\n顧雨晴 V.O.：人是不是很容易愛上別人呢？朝夕相處，什麼人都能愛，我曾經這樣懷疑自己。` },
+            'scene108': { name: '108場 - INT. 世博醫院，救護 VO、手術中', tags: ['緊張場景', '醫院'], defaultOwner: 'hong', script: `108. INT. 世博醫院 – 日\n\n救護人員 V.O.：請問是陸太太嗎？你好這是救護醫院，剛剛你先生在路上發生車禍，病患尚有意識前，請我們送往世博醫院。現在剛到院，通知你趕緊到醫院來。\n\n雨晴驚慌趕到醫院時，手術房外顯示著「手術中」，雨晴不知道如何是好。\n想起上次的事情，緊急趕快先打給婆婆。\n然後在姐妹的群組說明了一下，姐妹的安慰使得她內心中稍微安定。\n稍晚，陸父趕來病院，此時陸皓丞已經度過危險期，但仍然不能探視。` },
+            'scene111': { name: '111場 - INT. 世博醫院病房門口，陸父崩潰', tags: ['情感爆發', '從背面到正面'], defaultOwner: 'hong', script: `111. FLASHBACK INT. 世博醫院/皓丞病房門口 – 日\n陸皓丞的病房外，一個中年男子氣急敗壞的走出來，他是陸明清。\n陸明清氣憤離開病房，向前走著，一直走，一直走，走到最靠近窗外的角落。\n他的背影看似憤怒，抖動著。\n但此時，他正忍不住淚流滿面。（鏡頭指示：從背面到正面）\n\n陸明遠走了過來，拍拍陸明清的肩膀。\n\n陸明清：兩三天？\n\n陸明清質問著，但更像是對老天爺不滿的質問。\n\n陸明遠：哥，不到最後不要放棄。` },
+            'scene18': { name: '18場 - INT. 世博醫院病房，皓丞醒來模糊視角', tags: ['主觀視角', '模糊感'], defaultOwner: 'hong', script: `18. INT. 世博醫院 / 病房內 – 夜\n一個手機震動聲，驚醒了陸皓丞。\n模糊的空間與影像，讓他不是很確定自己在哪裡，但隨即刺鼻又熟悉的味道，他知道自己在醫院，熟悉的醫院。\n然後是滴滴答答的機械聲，心電圖還有不知名的機械運轉，似乎連點滴的滴噠聲也如此的清楚，但他卻無法聚焦。` },
+            'scene109': { name: '109場 - INT. 世博醫院病房，兩人對話', tags: ['情感重場', '告白'], defaultOwner: 'hong', script: `109. INT. 世博醫院/皓丞病房內 – 日\n雨晴在醫院醒來，陸皓丞不知道已經醒來多久，一直看著她的臉龐。\n但陸皓丞似乎已經知道了自己的事情，雨晴看著他心生不忍、滿眼淚水。\n\n陸皓丞：不是一直跟妳說，我比你早走的機率很高\n\n皓丞則伸手將她眼淚拭去。\n\n陸皓丞：有一年，我心情很差，去看了很多配對的人。剛好在寵物店看到妳，我記得你那時候說...\n\n（FLASHBACK 回憶插入）\n\n陸皓丞：我真的不是刻意對你懷謀不軌喔，只是又在巧遇而已\n\n（FLASHBACK 回憶插入）\n\n陸皓丞：妳說，不想有後悔的事情，我也不想有後悔的事情，這樣，也許我們可以....互相幫忙。\n\n聽完，雨晴忍不住流下淚水放聲大哭。` },
+            'scene133': { name: '133場 - INT. 皓丞家，陽光刺眼（結局）', tags: ['結局', '情感收尾'], defaultOwner: 'hong', script: `133. INT. 皓丞家 – 日\n雨晴走進皓丞的房間，陽光灑進房間，畫面美好。\n但她卻流下眼淚。\n謝曼莉走過來，拍拍她的肩膀。\n\n顧雨晴：他的房間陽光真刺眼` },
+            'fb-contract': { name: 'FLASHBACK - 雨晴家街口，皓丞車邊契約提議', tags: ['回憶', '傍晚氛圍'], defaultOwner: 'zhong', script: `FLASHBACK EXT. 回憶 － 雨晴家街口 － 皓丞車邊 － 傍晚\n\n陸皓丞：如果妳有興趣，我想跟妳簽一份契約婚姻，器官移植雖然是重點，但更重要的是如何規劃後續事宜，簡單來說，活著的人獲得死去的人的一切，但同時，也要負責照顧對方所關心的事物以及....家人。\n\n聽到家人這個字眼時，她內心緊緊一縮，她唯一的擔心，就是她的父親與視同家人的貓。\n（補情緒）` },
+            'fb-medicine': { name: 'FLASHBACK - 雨晴房間，父親餵藥', tags: ['回憶', '童年'], defaultOwner: 'zhong', script: `FLASHBACK INT. 雨晴家– 雨晴房間 – 夜\n父親坐在床邊，將藥放在小碟子中，拿給雨晴，然後另外一手則是溫開水。\n看著雨晴痛苦的把七八顆藥都吃下以後，父親拿了一杯果汁給她，雨晴則大口喝掉。\n喝完東西以後，雨晴痛苦的躺下，父親幫她蓋好棉被。` },
+            'fb-mother-work': { name: 'FLASHBACK - 父親工作室，母親咳嗽、小雨晴送水', tags: ['回憶', '母女互動'], defaultOwner: 'zhong', script: `FLASHBACK INT. 雨晴家–父親工作室 – 夜\n何怡真在書桌前打字，一邊咳嗽。\n此時，一個小女孩拉住她的衣服，拿了一杯水給她。\n何怡真摸了一下小女孩的頭髮，微笑。\n\n此時，雨晴想到母親的回憶，使她眼框泛淚。\n\n顧雨晴（VO）：我的病是遺傳的，所以我小時候，媽媽就常常生病，原本只是偶爾在家工作....。` },
+            'fb-mother-sick': { name: 'FLASHBACK - 父親房，母親臥病、小雨晴看著', tags: ['回憶', '情感重場'], defaultOwner: 'zhong', script: `FLASHBACK INT. 雨晴家 –父親房 – 夜\n\n顧雨晴（VO）：後來連工作的力氣都沒有了，只能躺在床上。\n\n母親躺在父親的房間裡，不斷咳嗽，父親一邊幫她拍背。小雨晴走進房間，看著母親。\n何怡真看到孩子，露出勉強的笑意，並伸出手，女孩看到母親微笑與伸手的肢體語言，終於放心向前走。\n\n何怡真看到小雨晴手上一本兒童英文讀物。\n\n何怡真：晴晴，等媽媽好一點，我再讀給妳聽喔。\n\n說完，何怡真再度咳嗽，小女孩點點頭。` },
+            'fb-petshop': { name: 'FLASHBACK - 寵物店，雨晴領養貓 + 皓丞偷拍', tags: ['回憶', '可能合併為一場'], defaultOwner: 'zhong', script: `FLASHBACK - 寵物店\n\n顧雨晴抱著一隻貓，將它捧在臂彎裡，親暱的說道「那我來領養他好了，所有人都需要有人愛，你也是」，然後親著小貓。\n\n在雨晴後方，假裝選購產品拿著貓罐頭帶著口罩的男子，就是陸皓丞。` },
+            'scene55': { name: '55場 - INT. 雨晴房間，驚醒踢貓', tags: ['已完成'], defaultOwner: 'hong', script: `55. INT. 雨晴房間 – 夜\n此時她再度又嚇了一跳尖叫，醒來，再度將貓踢下床。\n\n顧雨晴：天啊，我最近怎麼老是夢到這些….奇奇怪怪的\n\n她起床想喝口水，發現桌上的杯子已空。\n（補情緒）` },
+            'fb-car': { name: 'FLASHBACK - 車內，雨晴開車', tags: ['已完成'], defaultOwner: 'zhong', script: `FLASHBACK - 車內\n\n雨晴認真的開著車，陸皓丞看著她，其實內心是意外兩人會遇到。` }
+        };
+
+        let draggedElement = null;
+
+        function createTaskCard(taskId, data, isCompleted = false) {
+            const card = document.createElement('div');
+            card.className = `task-card ${isCompleted ? 'completed' : ''}`;
+            card.setAttribute('data-task', taskId);
+            card.setAttribute('draggable', !isCompleted);
+            
+            card.innerHTML = `
+                <div class="task-header">
+                    ${!isCompleted ? '<i class="ti ti-grip-vertical drag-handle" aria-hidden="true"></i>' : ''}
+                    <input type="checkbox" class="task-checkbox" ${isCompleted ? 'checked disabled' : ''}>
+                    <div class="task-info">
+                        <div class="task-name">${data.name}</div>
+                        <div class="task-meta">
+                            ${data.tags.map(tag => `<span class="task-tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    ${!isCompleted ? '<i class="ti ti-chevron-down expand-icon" aria-hidden="true"></i>' : ''}
+                </div>
+                ${!isCompleted ? `
+                <div class="script-content" id="script-${taskId}">
+                    <div class="script-label">劇本內容</div>
+                    <div class="script-text">${data.script}</div>
+                </div>
+                ` : ''}
+            `;
+
+            if (!isCompleted) {
+                // 拖移事件
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+
+                // 展開/收起劇本
+                const taskInfo = card.querySelector('.task-info');
+                taskInfo.addEventListener('click', () => toggleScript(taskId));
+
+                // 勾選完成
+                const checkbox = card.querySelector('.task-checkbox');
+                checkbox.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    handleCheck(taskId);
+                });
+            }
+
+            return card;
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.task-list').forEach(list => {
+                list.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            if (draggedElement !== this) {
+                const taskId = draggedElement.getAttribute('data-task');
+                const newOwner = this.getAttribute('data-owner');
+                
+                // 更新負責人
+                const owners = loadOwners();
+                owners[taskId] = newOwner;
+                saveOwners(owners);
+
+                // 重新渲染
+                renderAllTasks();
+            }
+
+            return false;
+        }
+
+        function toggleScript(taskId) {
+            const card = document.querySelector(`[data-task="${taskId}"]`);
+            const content = document.getElementById(`script-${taskId}`);
+            const icon = card.querySelector('.expand-icon');
+            
+            if (!content || !icon) return;
+            
+            const isExpanded = content.classList.contains('expanded');
+            
+            if (isExpanded) {
+                content.classList.remove('expanded');
+                icon.classList.remove('expanded');
+                card.classList.remove('expanded');
+            } else {
+                content.classList.add('expanded');
+                icon.classList.add('expanded');
+                card.classList.add('expanded');
+            }
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('ai-film-progress');
+            return saved ? JSON.parse(saved) : { 'fb-car': true, 'scene55': true };
+        }
+
+        function saveState(state) {
+            localStorage.setItem('ai-film-progress', JSON.stringify(state));
+        }
+
+        function loadOwners() {
+            const saved = localStorage.getItem('ai-film-owners');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        function saveOwners(owners) {
+            localStorage.setItem('ai-film-owners', JSON.stringify(owners));
+        }
+
+        function updateStats(state) {
+            const total = 26;
+            const completed = Object.keys(state).length;
+            const remaining = total - completed;
+            const percentage = Math.round((completed / total) * 100);
+            
+            document.getElementById('overall-percent').textContent = percentage + '%';
+            document.getElementById('completed-count').textContent = completed + ' / ' + total;
+            document.getElementById('remaining-count').textContent = remaining;
+            document.getElementById('progress-text').textContent = completed + ' / ' + total + ' (' + percentage + '%)';
+            document.getElementById('progress-fill').style.width = percentage + '%';
+        }
+
+        function handleCheck(taskId) {
+            const state = loadState();
+            const checkbox = document.querySelector(`[data-task="${taskId}"] .task-checkbox`);
+            
+            if (checkbox.checked) {
+                state[taskId] = true;
+            } else {
+                delete state[taskId];
+            }
+            
+            saveState(state);
+            renderAllTasks();
+        }
+
+        function renderAllTasks() {
+            const state = loadState();
+            const owners = loadOwners();
+            
+            const allTaskIds = Object.keys(scriptData).filter(id => !['scene55', 'fb-car'].includes(id));
+            
+            // 清空兩欄
+            const hongList = document.getElementById('hong-tasks');
+            const zhongList = document.getElementById('zhong-tasks');
+            hongList.innerHTML = '';
+            zhongList.innerHTML = '';
+            
+            let hongCount = 0;
+            let zhongCount = 0;
+
+            allTaskIds.forEach(taskId => {
+                if (!state[taskId]) {  // 未完成的任務
+                    const owner = owners[taskId] || scriptData[taskId].defaultOwner;
+                    const card = createTaskCard(taskId, scriptData[taskId], false);
+                    
+                    if (owner === 'hong') {
+                        hongList.appendChild(card);
+                        hongCount++;
+                    } else {
+                        zhongList.appendChild(card);
+                        zhongCount++;
+                    }
+                }
+            });
+
+            // 更新任務數量
+            document.getElementById('hong-count').textContent = `${hongCount} 場`;
+            document.getElementById('zhong-count').textContent = `${zhongCount} 場`;
+
+            // 設置拖放事件
+            [hongList, zhongList].forEach(list => {
+                list.addEventListener('dragover', handleDragOver);
+                list.addEventListener('dragenter', handleDragEnter);
+                list.addEventListener('dragleave', handleDragLeave);
+                list.addEventListener('drop', handleDrop);
+            });
+
+            // 渲染已完成任務
+            const completedGrid = document.getElementById('completed-tasks');
+            completedGrid.innerHTML = '';
+            ['scene55', 'fb-car'].forEach(taskId => {
+                const card = createTaskCard(taskId, scriptData[taskId], true);
+                completedGrid.appendChild(card);
+            });
+
+            updateStats(state);
+        }
+
+        function init() {
+            const today = new Date();
+            const deadline = new Date('2026-05-31');
+            const daysLeft = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+            document.getElementById('days-left').textContent = daysLeft;
+            
+            renderAllTasks();
+        }
+
+        init();
+    </script>
+</body>
+</html>
